@@ -33,13 +33,17 @@ except:
     print("Missing prerequisite programs in Path")
     sys.exit()
 
+# WORKING DIRS
 workingFileDir = "C:\\Users\\admin\Videos\\AV1\\Target_Quality\\"  # Where to dump excel files
 inputSampleDIR = "C:\\Users\\admin\Videos\\AV1\\Samples\\"
 inputSampleNames = []
 inputSampleShortNames = []
 outputDir = "C:\\Users\\admin\\Videos\\AV1\\Output\\"
+av1anWorkingDIR = "C:\\Users\\admin\\Videos\\AV1\\av1an_working\\"
 vmafPath = "C:\\Program Files\\ffmpeg\\vmaf_v0.6.1.json" # Path to vmaf model HAS TO BE .json
 
+
+# Recursively look for all the .mp4 files in the sample folder and dump the paths and names into a list
 for root, dirs, files in os.walk(inputSampleDIR):
     for inputFilename in files:
         if inputFilename.endswith(".mp4"):
@@ -55,7 +59,7 @@ currentIteration = -1
 
 # what are we testing?
 crfValues = [20]
-cpuUsedValues = [2, 3, 4]
+cpuUsedValues = [4, 3, 2]
 targetQuality = [75, 80, 83, 85, 90, 93, 95]
 
 # Pre Heat
@@ -71,7 +75,7 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
     # creates a new excel file for each sample
     workbook = xlsxwriter.Workbook(workingFileDir + str(inputSampleShortNames[currentIteration])[:-4] + '.xlsx')
     worksheet = workbook.add_worksheet()
-    worksheet.set_column('A:A', 13)  # Setting row Widths
+    worksheet.set_column('A:A', 13)
     worksheet.set_column('B:B', 18)
     worksheet.set_column('C:C', 20)
     worksheet.set_column('D:D', 20)
@@ -81,21 +85,23 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
     xOffset = 5
     yOffset = 1
     worksheet.write(xOffset - 1, yOffset + 1, str(inputSampleShortNames[currentIteration])[:-4], bold)
-    for currentCpuUsed in cpuUsedValues:  # Iterate through --CPU-USED
+    for currentCpuUsed in cpuUsedValues:  # Iterate through CPU-USED
 
         xOffset += 2
-        worksheet.write(xOffset - 1, yOffset - 1, "--CPU-Used " + str(currentCpuUsed), bold)
+        worksheet.write(xOffset - 1, yOffset - 1, "-CPU-Used " + str(currentCpuUsed), bold)
         worksheet.write(xOffset - 1, yOffset + 1, "Encode Time")
         worksheet.write(xOffset - 1, yOffset + 3, "File Size")
         for currentCRF in crfValues:
 
             for currentTargetQuality in targetQuality:
 
-                outputFileName = currentInputSampleName[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + ".mkv" # [:-4] removed the .mkv extension so i can pu tit on the end
+                outputFileName = str(outputDir) + str(inputSampleShortNames[currentIteration])[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + ".mkv" # [:-4] removed the .mkv extension so i can pu tit on the end
                 start_time = time.time()
 
-                #print("av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 20 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
-                os.system("av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 10 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
+                # Printing for debugging
+                print("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 20 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
+                # Why do i cd and then run av1an? because evil things happen.
+                os.system("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 10 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
 
                 processTime = int(time.time() - start_time)
 
