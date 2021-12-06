@@ -63,7 +63,7 @@ cpuUsedValues = [4, 3, 2]
 targetQuality = [75, 80, 83, 85, 90, 93, 95]
 
 # Pre Heat
-#os.system("ffmpeg -y -i \"D:\\Footage Dump\\4.mp4\" -c:v libx264 -preset veryslow -crf 0 -an -sn \"D:\\Footage Dump\\tmp.mp4\"")
+os.system("ffmpeg -y -i \"D:\\Footage Dump\\4.mp4\" -c:v libx264 -preset veryslow -crf 0 -an -sn \"D:\\Footage Dump\\tmp.mp4\"")
 
 for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
@@ -101,7 +101,7 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
                 # Printing for debugging
                 print("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 20 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
                 # Why do i cd and then run av1an? because evil things happen.
-                os.system("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 10 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
+                os.system("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 20 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
 
                 processTime = int(time.time() - start_time)
 
