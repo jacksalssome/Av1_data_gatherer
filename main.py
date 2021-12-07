@@ -13,6 +13,7 @@ print("Hi")
 
 init()  # Makes sure colour is displayed on Windows. --KEEP AT TOP--
 
+
 # Check Platform, set file path slashes
 if platform.system() == "Linux":
     fileSlashes = "/"
@@ -69,13 +70,15 @@ run("ffmpeg -y -i \"D:\\Footage Dump\\4.mp4\" -c:v libx264 -preset veryslow -crf
 
 for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
+    currentSampleShortName = inputSampleShortNames[currentIteration]
+
     print("")
     print("Starting: " + str(currentInputSampleName))
     print("")
 
     currentIteration += 1
     # creates a new excel file for each sample
-    workbook = xlsxwriter.Workbook(workingFileDir + str(inputSampleShortNames[currentIteration])[:-4] + '.xlsx')
+    workbook = xlsxwriter.Workbook(workingFileDir + str(currentSampleShortName)[:-4] + '.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column('A:A', 13)
     worksheet.set_column('B:B', 18)
@@ -86,7 +89,7 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
     xOffset = 5
     yOffset = 1
-    worksheet.write(xOffset - 1, yOffset + 1, str(inputSampleShortNames[currentIteration])[:-4], bold)
+    worksheet.write(xOffset - 1, yOffset + 1, str(currentSampleShortName)[:-4], bold)
     for currentCpuUsed in cpuUsedValues:  # Iterate through CPU-USED
 
         xOffset += 2
@@ -97,7 +100,7 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
             for currentTargetQuality in targetQuality:
 
-                outputFileName = str(outputDir) + str(inputSampleShortNames[currentIteration])[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + ".mkv" # [:-4] removed the .mkv extension so i can pu tit on the end
+                outputFileName = str(outputDir) + str(currentSampleShortName)[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + ".mkv"  # [:-4] removed the .mkv extension so i can pu tit on the end
                 start_time = time.time()
 
                 # Printing for debugging
@@ -107,27 +110,26 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
                 processTime = int(time.time() - start_time)
 
-                worksheet.write(xOffset, yOffset - 1, " --cq=" + str(currentCRF))
+                worksheet.write(xOffset, yOffset - 1, " --cq-level=" + str(currentCRF))
                 worksheet.write(xOffset, yOffset, " --target-quality " + str(currentTargetQuality))
 
                 # Time Taken to excel
                 worksheet.write(xOffset, yOffset + 1, processTime)
 
                 # File Size
-
                 try:
-                    size = "{:.2f}".format(os.path.getsize(outputFileName) / 1049000)  # IN MEBIBYTES with 2 decimal places
+                    size = "{:.2f}".format(os.path.getsize(outputFileName) / 1049000)  # IN MEBIBYTES (MiB) with 2 decimal places
                 except:
                     size = -1
                 worksheet.write(xOffset, yOffset + 3, str(size))
 
                 # txt Backup
 
-                f = open(workingFileDir + "resultsAV1_Sizes.txt", "a")
+                f = open(workingFileDir + currentSampleShortName + "_Sizes.txt", "a")
                 f.write("-crf " + str(currentCpuUsed) + " " + str(currentCRF) + " " + str(currentTargetQuality) + ":" + str(size) + "\n")
                 f.close()
 
-                f = open(workingFileDir + "resultsAV1_Times.txt", "a")
+                f = open(workingFileDir + currentSampleShortName + "_Times.txt", "a")
                 f.write("-crf " + str(currentCpuUsed) + " " + str(currentCRF) + " " + str(currentTargetQuality) + ":" + str(processTime) + "\n")
                 f.close()
 
