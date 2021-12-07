@@ -40,7 +40,7 @@ inputSampleNames = []
 inputSampleShortNames = []
 outputDir = "C:\\Users\\admin\\Videos\\AV1\\Output\\"
 av1anWorkingDIR = "C:\\Users\\admin\\Videos\\AV1\\av1an_working\\"
-vmafPath = "C:\\Program Files\\ffmpeg\\vmaf_v0.6.1.json" # Path to vmaf model HAS TO BE .json
+vmafPath = "C:\\Program Files\\ffmpeg\\vmaf_v0.6.1.json"  # Path to vmaf model HAS TO BE .json
 
 
 # Recursively look for all the .mp4 files in the sample folder and dump the paths and names into a list
@@ -50,6 +50,7 @@ for root, dirs, files in os.walk(inputSampleDIR):
             inputSampleNames.append(str(root) + fileSlashes + str(inputFilename))
             inputSampleShortNames.append(str(inputFilename))
             print(str(root) + fileSlashes + str(inputFilename))
+            continue  # TO USE ONLY ONE SAMPLE
 
 
 # Setup val's
@@ -60,10 +61,11 @@ currentIteration = -1
 # what are we testing?
 crfValues = [20]
 cpuUsedValues = [4, 3, 2]
-targetQuality = [75, 80, 83, 85, 90, 93, 95]
+targetQuality = [75, 80, 82, 83, 84, 85, 86, 87, 88, 89, 90, 93, 95]
 
 # Pre Heat
-os.system("ffmpeg -y -i \"D:\\Footage Dump\\4.mp4\" -c:v libx264 -preset veryslow -crf 0 -an -sn \"D:\\Footage Dump\\tmp.mp4\"")
+print("Running pre heat")
+run("ffmpeg -y -i \"D:\\Footage Dump\\4.mp4\" -c:v libx264 -preset veryslow -crf 0 -an -sn \"D:\\Footage Dump\\tmp.mp4\"", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
@@ -114,18 +116,18 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
                 # File Size
 
                 try:
-                    size = (int(os.path.getsize(outputFileName)) / (1024 * 1024))
+                    size = "{:.2f}".format(os.path.getsize(outputFileName) / 1049000)  # IN MEBIBYTES with 2 decimal places
                 except:
                     size = -1
                 worksheet.write(xOffset, yOffset + 3, str(size))
 
                 # txt Backup
 
-                f = open("C:\\Users\\admin\\Videos\\resultsAV1_Sizes.txt", "a")
+                f = open(workingFileDir + "resultsAV1_Sizes.txt", "a")
                 f.write("-crf " + str(currentCpuUsed) + " " + str(currentCRF) + " " + str(currentTargetQuality) + ":" + str(size) + "\n")
                 f.close()
 
-                f = open("C:\\Users\\admin\\Videos\\resultsAV1_Times.txt", "a")
+                f = open(workingFileDir + "resultsAV1_Times.txt", "a")
                 f.write("-crf " + str(currentCpuUsed) + " " + str(currentCRF) + " " + str(currentTargetQuality) + ":" + str(processTime) + "\n")
                 f.close()
 
