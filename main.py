@@ -5,9 +5,11 @@ import shutil
 import platform
 from colorama import init
 from colorama import Fore  # Color in Windows and Linux
+import signal
 import sys
 import subprocess
 from subprocess import run
+from decimal import Decimal
 
 print("Hi")
 
@@ -35,23 +37,26 @@ except:
     sys.exit()
 
 # WORKING DIRS
-workingFileDir = "C:\\Users\\admin\Videos\\AV1\\Target_Quality\\"  # Where to dump excel files
-inputSampleDIR = "C:\\Users\\admin\Videos\\AV1\\Samples\\"
+workingFileDir = "/home/admin2/Videos/AV1/Target_Quality/"  # Where to dump excel files
+inputSampleDIR = "/home/admin2/Videos/AV1/Samples/"
 inputSampleNames = []
 inputSampleShortNames = []
-outputDir = "C:\\Users\\admin\\Videos\\AV1\\Output\\"
-av1anWorkingDIR = "C:\\Users\\admin\\Videos\\AV1\\av1an_working\\"
-vmafPath = "C:\\Program Files\\ffmpeg\\vmaf_v0.6.1.json"  # Path to vmaf model HAS TO BE .json
+outputDir = "/home/admin2/Videos/AV1/Output/"
+av1anWorkingDIR = "/home/admin2/Videos/AV1/av1an_working/"
+vmafPath = "/home/admin2/Videos/AV1/vmaf_v0.6.1.json"  # Path to vmaf model HAS TO BE .json
 
 
 # Recursively look for all the .mp4 files in the sample folder and dump the paths and names into a list
+index1 = 0
 for root, dirs, files in os.walk(inputSampleDIR):
     for inputFilename in files:
         if inputFilename.endswith(".mp4"):
             inputSampleNames.append(str(root) + fileSlashes + str(inputFilename))
             inputSampleShortNames.append(str(inputFilename))
             print(str(root) + fileSlashes + str(inputFilename))
-            continue  # TO USE ONLY ONE SAMPLE
+            if index1 == 2:
+                break  # TO USE ONLY ONE SAMPLE
+            index1 += 1
 
 
 # Setup val's
@@ -65,8 +70,8 @@ cpuUsedValues = [4, 3, 2]
 targetQuality = [75, 80, 82, 83, 84, 85, 86, 87, 88, 89, 90, 93, 95]
 
 # Pre Heat
-print("Running pre heat")
-run("ffmpeg -y -i \"D:\\Footage Dump\\4.mp4\" -c:v libx264 -preset veryslow -crf 0 -an -sn \"D:\\Footage Dump\\tmp.mp4\"", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#print("Running pre heat")
+#run("ffmpeg -y -i \"D:\\Footage Dump\\4.mp4\" -c:v libx264 -preset veryslow -crf 0 -an -sn \"D:\\Footage Dump\\tmp.mp4\"", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
@@ -100,13 +105,23 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
             for currentTargetQuality in targetQuality:
 
-                outputFileName = str(outputDir) + str(currentSampleShortName)[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + ".mkv"  # [:-4] removed the .mkv extension so i can pu tit on the end
-                start_time = time.time()
+                try:
 
-                # Printing for debugging
-                print("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 20 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
-                # Why do i cd and then run av1an? because evil things happen.
-                os.system("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " -t 16\" -w 20 --target-quality " + str(currentTargetQuality) + " --vmaf-path \"" + vmafPath + "\" -o " + outputFileName)
+                    outputFileName = str(outputDir) + str(currentSampleShortName)[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + ".mkv"  # [:-4] removed the .mkv extension so i can pu tit on the end
+                    start_time = time.time()
+
+                    # Printing for debugging
+                    print("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " --threads=16\" -w 20 --target-quality " + str(currentTargetQuality) + " -o " + outputFileName)
+                    # Why do i cd and then run av1an? because evil things happen.
+                    os.system("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " --threads=16\" -w 20 --target-quality " + str(currentTargetQuality) + " -o " + outputFileName)
+
+                # Handling Ctrl-C
+                except KeyboardInterrupt:
+                    pass
+                finally:
+                    sys.exit("Ctrl-C")
+
+                # TOFO: Av1an output log and parse for encode duration.
 
                 processTime = int(time.time() - start_time)
 
@@ -118,10 +133,10 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
                 # File Size
                 try:
-                    size = "{:.2f}".format(os.path.getsize(outputFileName) / 1049000)  # IN MEBIBYTES (MiB) with 2 decimal places
+                    size = round((os.path.getsize(outputFileName) * 1024 ** 2), 2)  # IN MEBIBYTES (MiB) with 2 decimal places
                 except:
                     size = -1
-                worksheet.write(xOffset, yOffset + 3, str(size))
+                worksheet.write_number(xOffset, yOffset + 3, Decimal(size))
 
                 # txt Backup
 
@@ -135,4 +150,4 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
                 xOffset += 1
 
-    workbook.close()
+workbook.close()
