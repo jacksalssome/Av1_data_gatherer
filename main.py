@@ -34,17 +34,15 @@ try:
     run("aomenc", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 except:
     print("Missing prerequisite programs in Path")
-    sys.exit()
+    #sys.exit()
 
 # WORKING DIRS
-workingFileDir = "/home/admin2/Videos/AV1/Target_Quality/"  # Where to dump excel files
-inputSampleDIR = "/home/admin2/Videos/AV1/Samples/"
+workingFileDir = "C:\\Users\\admin\\Videos\\AV1\\Target_Quality\\"  # Where to dump excel files
+inputSampleDIR = "C:\\Users\\admin\\Videos\\AV1\\Samples\\"
 inputSampleNames = []
 inputSampleShortNames = []
-outputDir = "/home/admin2/Videos/AV1/Output/"
-av1anWorkingDIR = "/home/admin2/Videos/AV1/av1an_working/"
-vmafPath = "/home/admin2/Videos/AV1/vmaf_v0.6.1.json"  # Path to vmaf model HAS TO BE .json
-
+outputDir = "C:\\Users\\admin\\Videos\\AV1\\Output\\"
+av1anWorkingDIR = "C:\\Users\\admin\\Videos\\AV1\\av1an_working\\"
 
 # Recursively look for all the .mp4 files in the sample folder and dump the paths and names into a list
 index1 = 0
@@ -67,7 +65,7 @@ currentIteration = -1
 # what are we testing?
 crfValues = [20]
 cpuUsedValues = [4, 3, 2]
-targetQuality = [75, 80, 82, 83, 84, 85, 86, 87, 88, 89, 90, 93, 95]
+targetQuality = [72, 74, 76, 80, 84, 88, 92, 94, 96]
 
 # Pre Heat
 #print("Running pre heat")
@@ -105,49 +103,73 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
             for currentTargetQuality in targetQuality:
 
-                try:
+                for currentDeviation in range(0, 4):
 
-                    outputFileName = str(outputDir) + str(currentSampleShortName)[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + ".mkv"  # [:-4] removed the .mkv extension so i can pu tit on the end
+                    aomencArg = str
+                    av1anArg = str
+                    extra = str
+
+                    if currentDeviation == 0:
+                        aomencArg = "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " --threads=16\""
+                        av1anArg = " -w 20 --target-quality " + str(currentTargetQuality)
+                        extra = ""
+                    elif currentDeviation == 1:
+                        aomencArg = "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --lag-in-frames=5 --tile-rows=2 --tile-columns=1 --cpu-used=" + str(currentCpuUsed) + " --threads=16\""
+                        av1anArg = " -w 20 --target-quality " + str(currentTargetQuality)
+                        extra = "_lag-in-frames"
+                    elif currentDeviation == 2:
+                        aomencArg = "\" -v \" --end-usage=q --cq-level=30 --cpu-used=" + str(currentCpuUsed) + " --threads=16\""
+                        av1anArg = " -w 20 --target-quality " + str(currentTargetQuality)
+                        extra = "_CRF30"
+                    elif currentDeviation == 3:
+                        aomencArg = "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " --threads=8\""
+                        av1anArg = " -w 10 --target-quality " + str(currentTargetQuality)
+                        extra = "_t8w10"
+                    elif currentDeviation == 4:
+                        aomencArg = "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " --threads=16\""
+                        av1anArg = " -w 20"
+                        extra = "_noTarget"
+
+
+                    outputFileName = str(outputDir) + str(currentSampleShortName)[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + extra + ".mkv"  # [:-4] removed the .mkv extension so i can pu tit on the end
+                    outputName = str(currentSampleShortName)[:-4] + "_" + str(currentCpuUsed) + "_" + str(currentCRF) + "_" + str(currentTargetQuality) + extra
                     start_time = time.time()
 
                     # Printing for debugging
-                    print("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " --threads=16\" -w 20 --target-quality " + str(currentTargetQuality) + " -o " + outputFileName)
+                    print("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + aomencArg + av1anArg + " -o " + outputFileName)
                     # Why do i cd and then run av1an? because evil things happen.
-                    os.system("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + "\" -v \" --end-usage=q --cq-level=" + str(currentCRF) + " --cpu-used=" + str(currentCpuUsed) + " --threads=16\" -w 20 --target-quality " + str(currentTargetQuality) + " -o " + outputFileName)
+                    #os.system("cd " + av1anWorkingDIR + " && av1an -i \"" + currentInputSampleName + aomencArg + av1anArg + " -o " + outputFileName)
 
-                # Handling Ctrl-C
-                except KeyboardInterrupt:
-                    pass
-                finally:
-                    sys.exit("Ctrl-C")
 
-                # TOFO: Av1an output log and parse for encode duration.
 
-                processTime = int(time.time() - start_time)
+                    # TOFO: Av1an output log and parse for encode duration.
 
-                worksheet.write(xOffset, yOffset - 1, " --cq-level=" + str(currentCRF))
-                worksheet.write(xOffset, yOffset, " --target-quality " + str(currentTargetQuality))
+                    processTime = round((time.time() - start_time) / 60, 2)  # Return in Minutes
 
-                # Time Taken to excel
-                worksheet.write(xOffset, yOffset + 1, processTime)
+                    worksheet.write(xOffset, yOffset - 1, " --cq-level=" + str(currentCRF))
+                    worksheet.write(xOffset, yOffset, " --target-quality " + str(currentTargetQuality))
 
-                # File Size
-                try:
-                    size = round((os.path.getsize(outputFileName) * 1024 ** 2), 2)  # IN MEBIBYTES (MiB) with 2 decimal places
-                except:
-                    size = -1
-                worksheet.write_number(xOffset, yOffset + 3, Decimal(size))
+                    # Time Taken to excel
+                    worksheet.write(xOffset, yOffset + 1, processTime)
 
-                # txt Backup
+                    # File Size
+                    try:
+                        size = round(os.path.getsize(outputFileName) / 1048576), 2  # IN MEBIBYTES (MiB) with 2 decimal places
+                    except:
+                        size = -1
 
-                f = open(workingFileDir + currentSampleShortName + "_Sizes.txt", "a")
-                f.write("-crf " + str(currentCpuUsed) + " " + str(currentCRF) + " " + str(currentTargetQuality) + ":" + str(size) + "\n")
-                f.close()
+                    worksheet.write_number(xOffset, yOffset + 3, size, 2)
 
-                f = open(workingFileDir + currentSampleShortName + "_Times.txt", "a")
-                f.write("-crf " + str(currentCpuUsed) + " " + str(currentCRF) + " " + str(currentTargetQuality) + ":" + str(processTime) + "\n")
-                f.close()
+                    # txt Backup
 
-                xOffset += 1
+                    f = open(workingFileDir + outputName + "_Sizes.txt", "a")
+                    f.write(str(time.time()) + " :" + outputName + ":" + str(size) + "\n")
+                    f.close()
 
-workbook.close()
+                    f = open(workingFileDir + outputName + "_Times.txt", "a")
+                    f.write(str(time.time()) + " :" + outputName + ":" + str(processTime) + "\n")
+                    f.close()
+
+                    xOffset += 1
+
+    workbook.close()
