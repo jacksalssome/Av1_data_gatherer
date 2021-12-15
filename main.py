@@ -47,12 +47,15 @@ av1anWorkingDIR = "C:\\Users\\admin\\Videos\\AV1\\av1an_working\\"
 # Recursively look for all the .mp4 files in the sample folder and dump the paths and names into a list
 index1 = 0
 for root, dirs, files in os.walk(inputSampleDIR):
+    if index1 == 1:
+        break  # TO USE ONLY ONE SAMPLE
     for inputFilename in files:
         if inputFilename.endswith(".mp4"):
             inputSampleNames.append(str(root) + fileSlashes + str(inputFilename))
             inputSampleShortNames.append(str(inputFilename))
             print(str(root) + fileSlashes + str(inputFilename))
-            if index1 == 2:
+            if index1 == 0:
+                index1 += 1
                 break  # TO USE ONLY ONE SAMPLE
             index1 += 1
 
@@ -65,7 +68,7 @@ currentIteration = -1
 # what are we testing?
 crfValues = [20]
 cpuUsedValues = [4, 3, 2]
-targetQuality = [72, 74, 76, 80, 84, 88, 92, 94, 96]
+targetQuality = [72, 76, 80, 84, 88, 92, 96]
 
 # Pre Heat
 #print("Running pre heat")
@@ -154,11 +157,11 @@ for currentInputSampleName in inputSampleNames:  # Iterate through fps + samples
 
                     # File Size
                     try:
-                        size = round(os.path.getsize(outputFileName) / 1048576), 2  # IN MEBIBYTES (MiB) with 2 decimal places
+                        size = round((os.path.getsize(outputFileName) / 1048576), 2)  # IN MEBIBYTES (MiB) with 2 decimal places
                     except:
                         size = -1
 
-                    worksheet.write_number(xOffset, yOffset + 3, size, 2)
+                    worksheet.write_number(xOffset, yOffset + 3, size)
 
                     # txt Backup
 
